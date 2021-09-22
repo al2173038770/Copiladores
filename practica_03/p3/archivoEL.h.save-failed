@@ -1,0 +1,16 @@
+#ifndef archivoEL_h
+#define aM M.txt
+#define aC C.txt
+void leerFormula(){
+    FILE *f = fopen(aM,"r");
+    if(comprobacionArchivo(f)==0){
+        return;
+    }
+    while(!feof(f)){
+        fgets(expM,100,f);
+    }
+
+}
+
+
+#endif

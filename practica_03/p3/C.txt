@@ -1,0 +1,3 @@
+sqrt(a)*sqrt(a)=a
+10*pow(x,2)-24*x=0
+16-pow(x,2)=pow((3*x-4),2)

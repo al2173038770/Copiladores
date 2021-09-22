@@ -1,0 +1,208 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+void separaIgual(char cadena[]){
+    char *token;
+    token=strtok(expM,"=");
+    estadoA(token);
+
+    strcat(expM,"=");
+
+    token=strtok(NULL,'\0');
+    estadoA(token);
+
+}
+
+void sepAster(char cadena[]){
+    char *token;
+    //Separamos el interior de la cadena
+
+    token=strtok(cadena,"(");   //Quitamos el primer parentesis
+
+    strcat(expM,"(")            //Instertamos el caracter en la expresion C
+
+    token=strtok(NULL,")");     //Separamos el contenido entre parentesis
+    estadoA(token);             //Enviamos el contenido al estadoA
+
+    strcat(expM,")");           //Al retornar lo escrito en la expresion C cerramos parentesis
+
+    //Verificamos si existe mas contenido;
+    token=strtok(NULL,'\0');
+    if(strlen(token)!=0){
+        //Si encontramos mas contenido lo enviamos nuevamente al estadoS
+        estadoA(token);
+    }
+}
+
+void sepOperArit(char cadena[],char oper){
+    char *token, char op[2]={oper,'\0'};
+
+    token=strtok(cadena,op);             //Se toma la primera parte de la cadena para seguir analizandola
+    estadoA(token);                     //Enviamos la cadena
+
+                                        //Una vez retornado la parte derecha insertamos la operacion aritmetica
+    if(oper==':'){                      //Dado que la divicion es el uni que no se parece a C lo cambiamos
+        strcat(cadena,"\");
+    }else{
+        strcat(cadena,op);
+    }
+
+    token=strtok(NULL,'\0');            //Se toma la segunda parte de la cadena para seguir analizandola
+    estadoA(token);                     //Eviamos la seguna parte del operador
+}
+
+
+void forPotecia(char cadena[]){
+    char *token;
+    //Base
+    token=strtok(expM,'^');
+    posM=strlen(token);         //Separamos la base del exponente
+
+    //Exponente
+    strcat(expC,"pow(");        //Escribimos que es una potencia
+    estadoA(token);             //Eviamos la base al estadoS
+    strcat(expC,",");           //Ecribios en el lenguaje C que la base ya se esctribio;
+    token=strtok(NULL,'\0');    //Separamos el exponente de la cadena
+    estadoA(token);             //Enviamos el exponente al estado S
+    strcat(expC,")");           //Una vez impreso en lenguaje C cerramos la expresion
+}
+
+void formaRaiz(cadena){
+    if(cadena[1]=='2'){
+        if(cadena[2]=='/'){
+            //Es raiz cuadrada
+            char *token;
+            token=strtok(cadena,"/");
+            strcat(expC,"sqrt(");
+            token=strtok(NULL,'\0');
+            estadoA(token);
+            strcat(expC,")");
+        }else{
+            //Raiz
+            char *token1,*token2;
+            char b[2]={(char)92,'\0'};      //  "" \ ""
+            token1=strtok(cadena,b);
+            token1=strtok(NULL,"/");
+            token2=strtok(NULL,'\0');
+
+            strcat(expC,"pow(");
+            estadoA(token2);
+            strcat(expC,",1/");
+            estadoA(token1);
+            strcat(expC,")");
+            //Base
+            //Es potencia 1/algo
+
+        }
+    }
+}
+
+void estadoG(char cadena[]){
+    strcat(expC,cadena);
+}
+
+void estadoF(char cadena[]){
+    char r=(char)92;
+    if(cadena[0]== r){ //Comparamos el valor de la primera cadena con el valor en ascsii "\" para saber si es raiz
+        forRaiz(cadena);
+    }
+    estadoG(cadena);
+}
+
+void estadoE(char cadena[]){
+    int i=0;
+    char logaritmo[]="log_10";
+    char subCad[6];
+    memcpy(subCad,&cadena[0],6);
+
+    if(strcmp(subCad,logaritmo)==0){
+        char *token;
+        token=strtok(cadena,"(");
+        strcat(expC,"log(");
+        estadoA(cadena);
+        strcat(expC,"log)");
+    }
+    estadoF(cadena);
+}
+
+void estadoD(char cadena[]){
+    int i=0;
+    while(cadena[i]!='\0'){
+        if(cadena[i]=='^'){
+            int posGorro=i;
+            forPotecia(cadena, posGorro);
+        }
+        i++;
+    }
+    estadoE(cadena);
+}
+
+void estadoC(char cadena[]){
+    int i=0;
+    while(cadena[i]!='\0'){
+        if(cadena[i]=='+'){
+            sepOperArit(cadena,cadena[i]);
+            break;
+        }
+        else if(expM[i]=='-'){
+            sepOperArit(cadena,cadena[i]);
+            break;
+        }
+        i++;
+    }
+    estadoD(cadena);
+}
+
+void estadoB(char cadena[]){
+    int i=0;
+    //Mientras el caracter de la expresion Matematica no sea "fin de cadena" se analiza el siguiente caracter
+    while(cadena[i]!='\0'){
+        if(cadena[i]=='*'){                   //Si se encuetra el caracter '+' en la cadena
+            sepOperArit(cadena,cadena[i]);
+            break;
+        }else if(cadena[i]==':'){
+            sepOperArit(cadena,cadena[i]);
+            break;
+        }
+        i++;
+    }
+    //Si no es un simbolo aritmetica el contenido pasa al estado A
+    estadoC(cadena);
+}
+
+void estadoA(char cadena[]){
+    if(cadena[0]=='('){                           // Si en el arreglo expM en la posicion del apuntador es asterisco
+        sepAster(cadena);                          //Separamos el contenido de asterisco y retornamos al estado S
+    }
+    estadoA(cadena);
+}
+
+void estadoS(char cadena[]){
+    int i=0;
+    while(expM[i]!='\0'){
+        if(expM[i]=='='){                   //Si se encuentra una igualdad separamos la cadean en dos
+            separaIgual(cadena);
+            break;
+        }
+        i++;
+    }
+    else{
+        estadoA(cadena);
+    }
+}
+
+
+
+int main(){
+
+    int sizeM=0, sizeC=0;
+    scanf("%s",expM);
+    //sizeM=strlen(expM);
+    estadoS(expM);
+    printf("\n%s %d\n",expC, sizeM);
+
+    return 0;
+
+}
+
